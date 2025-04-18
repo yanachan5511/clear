@@ -30,10 +30,16 @@ def webhook():
 def handle_message(event):
     msg = event.message.text
 
-    if "品目" in msg or "見積" in msg:
-        reply_text = "明細を受け取りました。PDFを作成します！（まだ仮）"
+    if "品目" in msg or "見積書の作成！" in msg:
+        reply_text = "明細を受け取りました。PDFを作成します！"
+        
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=reply_text)
+        )
     else:
-        reply_text = "メッセージを受け取りました！"
+        # 何もしない（返信もしない）
+        return
 
     line_bot_api.reply_message(
         event.reply_token,
