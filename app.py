@@ -70,8 +70,17 @@ def handle_message(event):
 def webhook():
     signature = request.headers["X-Line-Signature"]
     body = request.get_data(as_text=True)
-    handler.handle(body, signature)
-    return "OK"
+    
+    try:
+        handler.handle(body, signature)
+    except InvalidSignatureError:
+        print("Invalid signature. Please check your channel access token and secret.")
+        return 'Invalid signature', 400
+    except Exception as e:
+        print(f"Error: {e}")
+        return 'Internal Server Error', 500
+
+    return 'OK', 200
 
 # アプリケーションを実行
 if __name__ == "__main__":
