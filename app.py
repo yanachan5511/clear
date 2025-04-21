@@ -1,7 +1,15 @@
+from flask import Flask, request, abort
+from linebot import LineBotApi, WebhookHandler
+from linebot.models import MessageEvent, TextMessage
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
+import os
+
+# LINE BotのAPIとハンドラーを初期化
+line_bot_api = LineBotApi('YOUR_CHANNEL_ACCESS_TOKEN')
+handler = WebhookHandler('YOUR_CHANNEL_SECRET')
 
 # 日本語フォントを登録
 pdfmetrics.registerFont(TTFont('IPAexGothic', 'static/fonts/ipaexg.ttf'))
@@ -12,7 +20,7 @@ def create_pdf(subject, expiry, items, filename):
 
     # フォント設定（日本語フォントを指定）
     c.setFont("IPAexGothic", 14)
-    
+
     c.drawString(50, height - 50, f"見積書：{subject}")
     c.setFont("IPAexGothic", 10)
     c.drawString(50, height - 70, f"有効期限：{expiry}")
@@ -56,4 +64,14 @@ def handle_message(event):
     )
 
 if __name__ == "__main__":
+    from flask import Flask, request
+    app = Flask(__name__)
+
+    @app.route("/webhook", methods=["POST"])
+    def webhook():
+        signature = request.headers["X-Line-Signature"]
+        body = request.get_data(as_text=True)
+        handler.handle(body, signature)
+        return "OK"
+
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
