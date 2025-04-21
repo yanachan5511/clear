@@ -1,62 +1,20 @@
-from flask import Flask, request, abort
-from linebot import LineBotApi, WebhookHandler
-from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage
-import os
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
 
-app = Flask(__name__)
-
-LINE_CHANNEL_ACCESS_TOKEN = os.getenv('LINE_CHANNEL_ACCESS_TOKEN')
-LINE_CHANNEL_SECRET = os.getenv('LINE_CHANNEL_SECRET')
-
-line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
-handler = WebhookHandler(LINE_CHANNEL_SECRET)
-
-@app.route("/webhook", methods=['POST'])
-def webhook():
-    signature = request.headers['X-Line-Signature']
-    body = request.get_data(as_text=True)
-    try:
-        handler.handle(body, signature)
-    except InvalidSignatureError:
-        abort(400)
-    return 'OK'
-
-def parse_quote(text):
-    lines = text.strip().split("\n")
-    subject = ""
-    expiry = ""
-    items = []
-
-    for line in lines:
-        line = line.replace("、", ",")
-        if line.startswith("件名,"):
-            subject = line.split("件名,")[1].strip()
-        elif line.startswith("有効期限,"):
-            expiry = line.split("有効期限,")[1].strip()
-        elif "," in line:
-            parts = [p.strip() for p in line.split(",")]
-            if len(parts) == 4:
-                name, qty, unit, price = parts
-                amount = int(qty) * int(price)
-                items.append({
-                    "name": name,
-                    "qty": qty,
-                    "unit": unit,
-                    "price": int(price),
-                    "amount": amount
-                })
-    return subject, expiry, items
+# 日本語フォントを登録
+pdfmetrics.registerFont(TTFont('IPAexGothic', 'static/fonts/ipaexg.ttf'))
 
 def create_pdf(subject, expiry, items, filename):
     c = canvas.Canvas(filename, pagesize=A4)
     width, height = A4
 
-    c.setFont("Helvetica-Bold", 14)
+    # フォント設定（日本語フォントを指定）
+    c.setFont("IPAexGothic", 14)
+    
     c.drawString(50, height - 50, f"見積書：{subject}")
-    c.setFont("Helvetica", 10)
+    c.setFont("IPAexGothic", 10)
     c.drawString(50, height - 70, f"有効期限：{expiry}")
 
     c.drawString(50, height - 100, "項目明細：")
