@@ -71,10 +71,6 @@ def handle_message(event):
 def webhook():
     signature = request.headers["X-Line-Signature"]
     body = request.get_data(as_text=True)
-
-    print(f"Received body: {body}")  # bodyをログに出力
-    print(f"Received signature: {signature}")  # signatureをログに出力
-    
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
