@@ -1,4 +1,4 @@
-from flask import Flask, request, abort
+from flask import Flask, request
 from linebot import LineBotApi, WebhookHandler
 from linebot.models import MessageEvent, TextMessage
 from reportlab.pdfgen import canvas
@@ -6,6 +6,9 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 import os
+
+# Flask アプリケーションを作成
+app = Flask(__name__)
 
 # LINE BotのAPIとハンドラーを初期化
 line_bot_api = LineBotApi('YOUR_CHANNEL_ACCESS_TOKEN')
@@ -63,15 +66,13 @@ def handle_message(event):
         TextSendMessage(text=reply_text)
     )
 
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    signature = request.headers["X-Line-Signature"]
+    body = request.get_data(as_text=True)
+    handler.handle(body, signature)
+    return "OK"
+
+# アプリケーションを実行
 if __name__ == "__main__":
-    from flask import Flask, request
-    app = Flask(__name__)
-
-    @app.route("/webhook", methods=["POST"])
-    def webhook():
-        signature = request.headers["X-Line-Signature"]
-        body = request.get_data(as_text=True)
-        handler.handle(body, signature)
-        return "OK"
-
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
